@@ -16,6 +16,7 @@ package tikv
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/magiconair/properties"
@@ -25,7 +26,9 @@ import (
 	"github.com/pingcap/kvproto/pkg/kvrpcpb"
 	"github.com/tikv/client-go/v2/rawkv"
 )
-
+const (
+	tikvAtomicPut = "tikv.atomic_put"
+)
 type rawDB struct {
 	db      *rawkv.Client
 	r       *util.RowCodec
@@ -41,6 +44,10 @@ func createRawDB(p *properties.Properties) (ycsb.DB, error) {
 	}
 	db, err := rawkv.NewClientWithOpts(context.Background(), strings.Split(pdAddr, ","),
 		rawkv.WithAPIVersion(kvrpcpb.APIVersion(apiVersion)))
+	if p.GetString(tikvAtomicPut, "false") == "true" {
+		log.Println("Set atomic for cas true")
+		db.SetAtomicForCAS(true)
+	}
 	if err != nil {
 		return nil, err
 	}
