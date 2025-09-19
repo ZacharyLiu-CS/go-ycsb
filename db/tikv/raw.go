@@ -50,6 +50,9 @@ func createRawDB(p *properties.Properties) (ycsb.DB, error) {
 	}
 	db, err := rawkv.NewClientWithOpts(context.Background(), strings.Split(pdAddr, ","),
 		rawkv.WithAPIVersion(kvrpcpb.APIVersion(apiVersion)))
+	if err != nil {
+		return nil, err
+	}
 	if p.GetString(tikvAtomicPut, "false") == "true" {
 		log.Println("Set atomic for cas true")
 		db.SetAtomicForCAS(true)
@@ -65,10 +68,7 @@ func createRawDB(p *properties.Properties) (ycsb.DB, error) {
 		db.Put(context.Background(), []byte(authTokenKey), []byte(authTokenValue))
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
+	bufPool := util.NewBufPool()
 	bufPool := util.NewBufPool()
 
 	return &rawDB{
