@@ -69,7 +69,6 @@ func createRawDB(p *properties.Properties) (ycsb.DB, error) {
 	}
 
 	bufPool := util.NewBufPool()
-	bufPool := util.NewBufPool()
 
 	return &rawDB{
 		db:              db,

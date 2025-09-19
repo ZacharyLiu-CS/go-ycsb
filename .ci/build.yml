@@ -50,7 +50,7 @@ stages:
               repositoryUrl: ${{ci.repo_url}}
               git_private_token: ${{ci.token}}
               ld_selectop: "upload_one_attachment"
-              ld_input_branch: release_${{ ci.build_num }}
+              ld_input_branch: "release_v${{ ci.build_num }}.0"
               ld_input_upload_file_name: "./bin/go-ycsb"
 
 notices:
