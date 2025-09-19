@@ -1,0 +1,58 @@
+version: v2.0
+
+on:
+  push: ["master"]
+  mr: ["*"]
+
+stages:
+  - name: "go-ycsb CI Flow"
+    jobs:
+      job_id:
+        name: "go-ycsb Build Test" # 作业名称
+        runs-on:
+          pool-name: docker
+          container:
+            image: mirrors.tencent.com/ci/tlinux4_ci:1.0.0
+
+        steps:
+          - name: Checkout Code
+            checkout: self
+          - name: Install Go env
+            env:
+              GO_VERSION: "1.21.7"
+            run: |
+              rm -rf /usr/local/go \
+              && curl -O https://dl.google.com/go/go$GO_VERSION.linux-amd64.tar.gz \
+              && tar -C /usr/local -xzf go$GO_VERSION.linux-amd64.tar.gz \
+              && rm go$GO_VERSION.linux-amd64.tar.gz \
+              && export PATH="/usr/local/go/bin:$PATH" && export GOPATH=$(go env GOPATH) \
+          - name: Build Go Project
+            run: |
+              go mod tidy && make
+          - name: "create_one_release"
+            id: "step_3"
+            uses: "gitbranchop@3.*"
+            with:
+              git_type: "git_woa"
+              code_auth_type: "GIT_CI"
+              repositoryUrl: ${{ci.repo_url}}
+              git_private_token: ${{ci.token}}
+              ld_selectop: "create_one_tag"
+              ld_input_src_branch: "master"
+              ld_input_dst_branch: "release_v${{ ci.build_num }}.0"
+
+          - name: "upload_file"
+            id: "step_4"
+            uses: "gitbranchop@3.*"
+            with:
+              git_type: "git_woa"
+              code_auth_type: "GIT_CI"
+              repositoryUrl: ${{ci.repo_url}}
+              git_private_token: ${{ci.token}}
+              ld_selectop: "upload_one_attachment"
+              ld_input_branch: release_${{ ci.build_num }}
+              ld_input_upload_file_name: "./bin/go-ycsb"
+
+notices:
+  # 执行完毕后，发送企业微信通知
+  - type: wework-message

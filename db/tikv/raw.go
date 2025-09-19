@@ -26,13 +26,19 @@ import (
 	"github.com/pingcap/kvproto/pkg/kvrpcpb"
 	"github.com/tikv/client-go/v2/rawkv"
 )
+
 const (
 	tikvAtomicPut = "tikv.atomic_put"
+	tikvAuthMode  = "tikv.auth_mode"
 )
+
 type rawDB struct {
-	db      *rawkv.Client
-	r       *util.RowCodec
-	bufPool *util.BufPool
+	db              *rawkv.Client
+	r               *util.RowCodec
+	bufPool         *util.BufPool
+	enableAuthWrite bool
+	authTokenKey    string
+	authTokenValue  string
 }
 
 func createRawDB(p *properties.Properties) (ycsb.DB, error) {
@@ -48,6 +54,17 @@ func createRawDB(p *properties.Properties) (ycsb.DB, error) {
 		log.Println("Set atomic for cas true")
 		db.SetAtomicForCAS(true)
 	}
+
+	// enable authorization for write
+	enableAuthWrite := false
+	authTokenKey := "r_ycsb_auth_k"
+	authTokenValue := "ycsb_auth_v"
+	if p.GetString(tikvAuthMode, "false") == "true" {
+		log.Println("Set auth mode for put, delete and write")
+		enableAuthWrite = true
+		db.Put(context.Background(), []byte(authTokenKey), []byte(authTokenValue))
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -55,9 +72,12 @@ func createRawDB(p *properties.Properties) (ycsb.DB, error) {
 	bufPool := util.NewBufPool()
 
 	return &rawDB{
-		db:      db,
-		r:       util.NewRowCodec(p),
-		bufPool: bufPool,
+		db:              db,
+		r:               util.NewRowCodec(p),
+		bufPool:         bufPool,
+		enableAuthWrite: enableAuthWrite,
+		authTokenKey:    authTokenKey,
+		authTokenValue:  authTokenValue,
 	}, nil
 }
 
@@ -162,6 +182,9 @@ func (db *rawDB) BatchUpdate(ctx context.Context, table string, keys []string, v
 		}
 		rawValues = append(rawValues, rawData)
 	}
+	if db.enableAuthWrite {
+		return db.db.BatchPut(ctx, rawKeys, rawValues, rawkv.SetWriteAuthToken(db.authTokenKey, db.authTokenValue))
+	}
 	return db.db.BatchPut(ctx, rawKeys, rawValues)
 }
 
@@ -176,7 +199,9 @@ func (db *rawDB) Insert(ctx context.Context, table string, key string, values ma
 	if err != nil {
 		return err
 	}
-
+	if db.enableAuthWrite {
+		return db.db.Put(ctx, db.getRowKey(table, key), buf, rawkv.SetWriteAuthToken(db.authTokenKey, db.authTokenValue))
+	}
 	return db.db.Put(ctx, db.getRowKey(table, key), buf)
 }
 
@@ -191,10 +216,16 @@ func (db *rawDB) BatchInsert(ctx context.Context, table string, keys []string, v
 		}
 		rawValues = append(rawValues, rawData)
 	}
+	if db.enableAuthWrite {
+		return db.db.BatchPut(ctx, rawKeys, rawValues, rawkv.SetWriteAuthToken(db.authTokenKey, db.authTokenValue))
+	}
 	return db.db.BatchPut(ctx, rawKeys, rawValues)
 }
 
 func (db *rawDB) Delete(ctx context.Context, table string, key string) error {
+	if db.enableAuthWrite {
+		return db.db.Delete(ctx, db.getRowKey(table, key), rawkv.SetWriteAuthToken(db.authTokenKey, db.authTokenValue))
+	}
 	return db.db.Delete(ctx, db.getRowKey(table, key))
 }
 
@@ -202,6 +233,9 @@ func (db *rawDB) BatchDelete(ctx context.Context, table string, keys []string) e
 	rowKeys := make([][]byte, len(keys))
 	for i, key := range keys {
 		rowKeys[i] = db.getRowKey(table, key)
+	}
+	if db.enableAuthWrite {
+		return db.db.BatchDelete(ctx, rowKeys, rawkv.SetWriteAuthToken(db.authTokenKey, db.authTokenValue))
 	}
 	return db.db.BatchDelete(ctx, rowKeys)
 }

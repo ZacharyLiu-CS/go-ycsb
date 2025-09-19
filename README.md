@@ -143,6 +143,7 @@ Common configurations:
 |tikv.conncount|128|gRPC connection count|
 |tikv.batchsize|128|Request batch size|
 |tikv.atomic_put|false| (Batch)Put/Write/Delete in atomic mode (enable with raw type)|
+|tikv.auth_mode|false| (Batch)Put/Write/Delete with auth api (overwrite thee atomic put option)|
 |tikv.async_commit|true|Enalbe async commit or not|
 |tikv.one_pc|true|Enable one phase or not|
 |tikv.apiversion|"V1"|[api-version](https://docs.pingcap.com/tidb/stable/tikv-configuration-file#api-version-new-in-v610) of tikv server, "V1" or "V2"|
