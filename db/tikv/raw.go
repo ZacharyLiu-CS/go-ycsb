@@ -28,8 +28,9 @@ import (
 )
 
 const (
-	tikvAtomicPut = "tikv.atomic_put"
-	tikvAuthMode  = "tikv.auth_mode"
+	tikvAtomicPut    = "tikv.atomic_put"
+	tikvAuthMode     = "tikv.auth_mode"
+	tikvColumnFamily = "tikv.column_family"
 )
 
 type rawDB struct {
@@ -50,6 +51,11 @@ func createRawDB(p *properties.Properties) (ycsb.DB, error) {
 	}
 	db, err := rawkv.NewClientWithOpts(context.Background(), strings.Split(pdAddr, ","),
 		rawkv.WithAPIVersion(kvrpcpb.APIVersion(apiVersion)))
+
+	// set column family
+	cf := p.GetString(tikvColumnFamily, "default")
+	db.SetColumnFamily(cf)
+
 	if err != nil {
 		return nil, err
 	}
