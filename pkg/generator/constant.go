@@ -30,7 +30,7 @@
 
 package generator
 
-import "math/rand"
+import "math/rand/v2"
 
 // Constant is a trivial generator that always returns the same value.
 type Constant struct {

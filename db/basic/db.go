@@ -34,7 +34,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"time"
 
 	"github.com/magiconair/properties"
@@ -74,7 +74,7 @@ func (db *basicDB) delay(ctx context.Context, state *basicState) {
 	r := state.r
 	delayTime := time.Duration(db.toDelay) * time.Millisecond
 	if db.randomizeDelay {
-		delayTime = time.Duration(r.Int63n(db.toDelay)) * time.Millisecond
+		delayTime = time.Duration(r.Int64N(db.toDelay)) * time.Millisecond
 		if delayTime == 0 {
 			return
 		}
@@ -88,7 +88,7 @@ func (db *basicDB) delay(ctx context.Context, state *basicState) {
 
 func (db *basicDB) InitThread(ctx context.Context, _ int, _ int) context.Context {
 	state := new(basicState)
-	state.r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	state.r = rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), 1))
 	state.buf = new(bytes.Buffer)
 
 	return context.WithValue(ctx, stateKey, state)

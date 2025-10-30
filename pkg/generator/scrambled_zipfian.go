@@ -31,7 +31,7 @@
 package generator
 
 import (
-	"math/rand"
+	"math/rand/v2"
 
 	"github.com/pingcap/go-ycsb/pkg/util"
 )

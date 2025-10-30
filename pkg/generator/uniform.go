@@ -30,7 +30,7 @@
 
 package generator
 
-import "math/rand"
+import "math/rand/v2"
 
 // Uniform generates integers randomly.
 type Uniform struct {
@@ -51,7 +51,7 @@ func NewUniform(lb int64, ub int64) *Uniform {
 
 // Next implements the Generator Next interface.
 func (u *Uniform) Next(r *rand.Rand) int64 {
-	n := r.Int63n(u.interval) + u.lb
+	n := r.Int64N(u.interval) + u.lb
 	u.SetLastValue(n)
 	return n
 }

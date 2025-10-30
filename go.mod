@@ -173,6 +173,6 @@ replace github.com/pingcap/kvproto => git.woa.com/EasyGraph/tikv/kvproto v0.0.0-
 
 replace github.com/tikv/client-go/v2 => git.woa.com/EasyGraph/tikv/client-go/v2 v2.0.0-20250917131118-bc6bbe96d5ee
 
-go 1.21
+go 1.22
 
-toolchain go1.21.13
+toolchain go1.22.5

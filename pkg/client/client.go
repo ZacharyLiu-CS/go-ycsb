@@ -16,7 +16,7 @@ package client
 import (
 	"context"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 	"sync"
 	"time"
@@ -113,7 +113,7 @@ func (w *worker) throttle(ctx context.Context, startTime time.Time) {
 func (w *worker) run(ctx context.Context) {
 	// spread the thread operation out so they don't all hit the DB at the same time
 	if w.targetOpsPerMs > 0.0 && w.targetOpsPerMs <= 1.0 {
-		time.Sleep(time.Duration(rand.Int63n(w.targetOpsTickNs)))
+		time.Sleep(time.Duration(rand.Int64N(w.targetOpsTickNs)))
 	}
 
 	startTime := time.Now()

@@ -24,6 +24,7 @@
 
 recordcount=200000000
 operationcount=200000000
+insertstart=200000000
 workload=core
 
 readallfields=true
@@ -41,4 +42,4 @@ insertorder=ordered
 
 fieldlength=50
 fieldcount=1
-
+batch.size=128

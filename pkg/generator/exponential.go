@@ -32,7 +32,7 @@ package generator
 
 import (
 	"math"
-	"math/rand"
+	"math/rand/v2"
 )
 
 // Exponential generates an exponential distribution. It produces a sequence

@@ -31,7 +31,7 @@
 package generator
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"time"
 
 	"github.com/pingcap/go-ycsb/pkg/ycsb"
@@ -54,7 +54,7 @@ func NewSkewedLatest(basis ycsb.Generator) *SkewedLatest {
 		zipfian: zipfian,
 	}
 
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r := rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), 1))
 	s.Next(r)
 	return s
 }

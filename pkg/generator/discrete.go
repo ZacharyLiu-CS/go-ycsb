@@ -30,7 +30,7 @@
 
 package generator
 
-import "math/rand"
+import "math/rand/v2"
 
 type discretePair struct {
 	Weight float64

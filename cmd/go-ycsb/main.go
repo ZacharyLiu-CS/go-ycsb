@@ -115,6 +115,7 @@ func initialGlobal(dbName string, onProperties func()) {
 	addr := globalProps.GetString(prop.DebugPprof, prop.DebugPprofDefault)
 	go func() {
 		http.ListenAndServe(addr, nil)
+		fmt.Println("pprof server start success {}", addr)
 	}()
 
 	measurement.InitMeasure(globalProps)

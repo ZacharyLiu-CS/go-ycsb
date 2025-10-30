@@ -15,7 +15,7 @@ package util
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 	"sync"
 )
@@ -39,7 +39,7 @@ var letters = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 // RandBytes fills the bytes with alphabetic characters randomly
 func RandBytes(r *rand.Rand, b []byte) {
 	for i := range b {
-		b[i] = letters[r.Intn(len(letters))]
+		b[i] = letters[r.IntN(len(letters))]
 	}
 }
 

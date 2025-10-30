@@ -33,7 +33,7 @@ package generator
 import (
 	"fmt"
 	"math"
-	"math/rand"
+	"math/rand/v2"
 	"time"
 
 	"github.com/pingcap/go-ycsb/pkg/util"
@@ -112,7 +112,7 @@ func NewZipfian(min int64, max int64, zipfianConstant float64, zetan float64) *Z
 	z.countForZeta = items
 	z.eta = (1 - math.Pow(2.0/float64(items), 1-theta)) / (1 - z.zeta2Theta/z.zetan)
 
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r := rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), 1))
 	z.Next(r)
 	return z
 }

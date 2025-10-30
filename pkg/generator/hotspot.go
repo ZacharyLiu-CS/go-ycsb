@@ -30,7 +30,7 @@
 
 package generator
 
-import "math/rand"
+import "math/rand/v2"
 
 // Hotspot generates integers resembling a hotspot distribution where %x of operations
 // access y% of data items.
@@ -78,9 +78,9 @@ func NewHotspot(lowerBound int64, upperBound int64, hotsetFraction float64, hotO
 func (h *Hotspot) Next(r *rand.Rand) int64 {
 	value := int64(0)
 	if r.Float64() < h.hotOpnFraction {
-		value = h.lowerBound + r.Int63n(h.hotInterval)
+		value = h.lowerBound + r.Int64N(h.hotInterval)
 	} else {
-		value = h.lowerBound + h.hotInterval + r.Int63n(h.coldInterval)
+		value = h.lowerBound + h.hotInterval + r.Int64N(h.coldInterval)
 	}
 	h.SetLastValue(value)
 	return value

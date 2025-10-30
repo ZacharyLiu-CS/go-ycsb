@@ -13,7 +13,7 @@
 
 package ycsb
 
-import "math/rand"
+import "math/rand/v2"
 
 // Generator generates a sequence of values, following some distribution (Uniform, Zipfian, etc.).
 type Generator interface {

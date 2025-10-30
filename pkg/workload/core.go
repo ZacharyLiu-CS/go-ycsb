@@ -18,7 +18,7 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"math/rand"
+	"math/rand/v2"
 	"strconv"
 	"strings"
 	"sync"
@@ -140,7 +140,7 @@ func (c *core) Load(ctx context.Context, db ycsb.DB, totalCount int64) error {
 
 // InitThread implements the Workload InitThread interface.
 func (c *core) InitThread(ctx context.Context, _ int, _ int) context.Context {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r := rand.New(rand.NewPCG(uint64(time.Now().UnixNano()), 1))
 	fieldNames := make([]string, len(c.fieldNames))
 	copy(fieldNames, c.fieldNames)
 	state := &coreState{

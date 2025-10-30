@@ -32,7 +32,7 @@ package generator
 
 import (
 	"io/ioutil"
-	"math/rand"
+	"math/rand/v2"
 	"strconv"
 	"strings"
 
@@ -118,7 +118,7 @@ func NewHistogramFromFile(name string) *Histogram {
 
 // Next implements the Generator Next interface.
 func (h *Histogram) Next(r *rand.Rand) int64 {
-	n := r.Int63n(h.area)
+	n := r.Int64N(h.area)
 
 	i := int64(0)
 	for ; i < int64(len(h.buckets))-1; i++ {
