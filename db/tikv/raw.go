@@ -28,18 +28,20 @@ import (
 )
 
 const (
-	tikvAtomicPut    = "tikv.atomic_put"
-	tikvAuthMode     = "tikv.auth_mode"
-	tikvColumnFamily = "tikv.column_family"
+	tikvAtomicPut                  = "tikv.atomic_put"
+	tikvAuthMode                   = "tikv.auth_mode"
+	tikvColumnFamily               = "tikv.column_family"
+	tikvReplaceUpdateWithSetKeyTTL = "tikv.replace_update_with_setkeyttl"
 )
 
 type rawDB struct {
-	db              *rawkv.Client
-	r               *util.RowCodec
-	bufPool         *util.BufPool
-	enableAuthWrite bool
-	authTokenKey    string
-	authTokenValue  string
+	db                         *rawkv.Client
+	r                          *util.RowCodec
+	bufPool                    *util.BufPool
+	enableAuthWrite            bool
+	authTokenKey               string
+	authTokenValue             string
+	replaceUpdateWithSetKeyTTL bool
 }
 
 func createRawDB(p *properties.Properties) (ycsb.DB, error) {
@@ -76,13 +78,20 @@ func createRawDB(p *properties.Properties) (ycsb.DB, error) {
 
 	bufPool := util.NewBufPool()
 
+	// enable replace update with SetKeyTTL
+	replaceUpdateWithSetKeyTTL := p.GetString(tikvReplaceUpdateWithSetKeyTTL, "false") == "true"
+	if replaceUpdateWithSetKeyTTL {
+		log.Println("Set replace update with SetKeyTTL mode")
+	}
+
 	return &rawDB{
-		db:              db,
-		r:               util.NewRowCodec(p),
-		bufPool:         bufPool,
-		enableAuthWrite: enableAuthWrite,
-		authTokenKey:    authTokenKey,
-		authTokenValue:  authTokenValue,
+		db:                         db,
+		r:                          util.NewRowCodec(p),
+		bufPool:                    bufPool,
+		enableAuthWrite:            enableAuthWrite,
+		authTokenKey:               authTokenKey,
+		authTokenValue:             authTokenValue,
+		replaceUpdateWithSetKeyTTL: replaceUpdateWithSetKeyTTL,
 	}, nil
 }
 
@@ -172,6 +181,17 @@ func (db *rawDB) Update(ctx context.Context, table string, key string, values ma
 	}
 
 	// Update data and use Insert to overwrite.
+	if db.replaceUpdateWithSetKeyTTL {
+		// When replaceUpdateWithSetKeyTTL is enabled, use SetKeyTTL instead of Put
+		// For now, we use a default TTL of 0 (no TTL) since the original Update doesn't have TTL
+		rowKey := db.getRowKey(table, key)
+		var opts []rawkv.RawOption
+		if db.enableAuthWrite {
+			opts = append(opts, rawkv.SetWriteAuthToken(db.authTokenKey, db.authTokenValue))
+		}
+		return db.SetKeyTTL(ctx, rowKey, 0, opts...)
+	}
+
 	return db.Insert(ctx, table, key, data)
 }
 
@@ -187,6 +207,22 @@ func (db *rawDB) BatchUpdate(ctx context.Context, table string, keys []string, v
 		}
 		rawValues = append(rawValues, rawData)
 	}
+
+	if db.replaceUpdateWithSetKeyTTL {
+		// When replaceUpdateWithSetKeyTTL is enabled, use BatchSetKeyTTL instead of BatchPut
+		// For now, we use a default TTL of 0 (no TTL) for all keys since the original BatchUpdate doesn't have TTL
+		ttls := make([]uint64, len(rawKeys))
+		for i := range ttls {
+			ttls[i] = 0
+		}
+
+		var opts []rawkv.RawOption
+		if db.enableAuthWrite {
+			opts = append(opts, rawkv.SetWriteAuthToken(db.authTokenKey, db.authTokenValue))
+		}
+		return db.BatchSetKeyTTL(ctx, rawKeys, ttls, opts...)
+	}
+
 	if db.enableAuthWrite {
 		return db.db.BatchPut(ctx, rawKeys, rawValues, rawkv.SetWriteAuthToken(db.authTokenKey, db.authTokenValue))
 	}
@@ -243,4 +279,20 @@ func (db *rawDB) BatchDelete(ctx context.Context, table string, keys []string) e
 		return db.db.BatchDelete(ctx, rowKeys, rawkv.SetWriteAuthToken(db.authTokenKey, db.authTokenValue))
 	}
 	return db.db.BatchDelete(ctx, rowKeys)
+}
+
+// SetKeyTTL updates the TTL of an existing raw key without changing its value
+func (db *rawDB) SetKeyTTL(ctx context.Context, key []byte, ttl uint64, options ...rawkv.RawOption) error {
+	// Put the same value back (TTL functionality will be added later)
+	return db.db.SetKeyTTL(ctx, key, ttl, options...)
+}
+
+// BatchSetKeyTTL batch updates TTLs for multiple raw keys
+func (db *rawDB) BatchSetKeyTTL(ctx context.Context, keys [][]byte, ttls []uint64, options ...rawkv.RawOption) error {
+	if len(keys) != len(ttls) {
+		return errors.New("length of keys must equal length of ttls")
+	}
+
+	// Put the same values back (TTL functionality will be added later)
+	return db.db.BatchSetKeyTTL(ctx, keys, ttls, options...)
 }
