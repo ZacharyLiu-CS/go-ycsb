@@ -169,9 +169,9 @@ require (
 
 replace github.com/apache/thrift => github.com/apache/thrift v0.0.0-20171203172758-327ebb6c2b6d
 
-replace github.com/pingcap/kvproto => git.woa.com/EasyGraph/tikv/kvproto v0.0.0-20251120081206-83f5cdec8784
+replace github.com/pingcap/kvproto => git.woa.com/EasyGraph/tikv/kvproto v0.0.0-20260120054134-355fb5bb3471
 
-replace github.com/tikv/client-go/v2 => git.woa.com/EasyGraph/tikv/client-go/v2 v2.0.0-20251121080557-338164f4738d
+replace github.com/tikv/client-go/v2 => git.woa.com/EasyGraph/tikv/client-go/v2 v2.0.0-20260128122423-c609665cd1ef
 
 go 1.22
 

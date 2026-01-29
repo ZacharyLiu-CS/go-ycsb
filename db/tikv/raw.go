@@ -32,6 +32,7 @@ const (
 	tikvAuthMode                   = "tikv.auth_mode"
 	tikvColumnFamily               = "tikv.column_family"
 	tikvReplaceUpdateWithSetKeyTTL = "tikv.replace_update_with_setkeyttl"
+	tikvScanNotFillCache		   = "tikv.scan_not_fill_cache"	
 )
 
 type rawDB struct {
@@ -42,6 +43,7 @@ type rawDB struct {
 	authTokenKey               string
 	authTokenValue             string
 	replaceUpdateWithSetKeyTTL bool
+	scanNotFillCache		   bool
 }
 
 func createRawDB(p *properties.Properties) (ycsb.DB, error) {
@@ -76,6 +78,12 @@ func createRawDB(p *properties.Properties) (ycsb.DB, error) {
 		db.Put(context.Background(), []byte(authTokenKey), []byte(authTokenValue))
 	}
 
+	// enable scan not fill cache
+	scanNotFillCache := p.GetString(tikvScanNotFillCache, "false") == "true"
+	if scanNotFillCache {
+		log.Println("Set scan not fill cache mode")
+	}
+
 	bufPool := util.NewBufPool()
 
 	// enable replace update with SetKeyTTL
@@ -92,6 +100,7 @@ func createRawDB(p *properties.Properties) (ycsb.DB, error) {
 		authTokenKey:               authTokenKey,
 		authTokenValue:             authTokenValue,
 		replaceUpdateWithSetKeyTTL: replaceUpdateWithSetKeyTTL,
+		scanNotFillCache:		   	scanNotFillCache,
 	}, nil
 }
 
@@ -143,7 +152,11 @@ func (db *rawDB) BatchRead(ctx context.Context, table string, keys []string, fie
 }
 
 func (db *rawDB) Scan(ctx context.Context, table string, startKey string, count int, fields []string) ([]map[string][]byte, error) {
-	_, rows, err := db.db.Scan(ctx, db.getRowKey(table, startKey), nil, count)
+	var opts []rawkv.RawOption
+	if db.scanNotFillCache {
+		opts = append(opts, rawkv.ScanNotFillCache(db.scanNotFillCache))
+	} 
+	_, rows, err := db.db.Scan(ctx, db.getRowKey(table, startKey), nil, count, opts...)
 	if err != nil {
 		return nil, err
 	}

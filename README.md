@@ -149,7 +149,7 @@ Common configurations:
 |tikv.one_pc|true|Enable one phase or not|
 |tikv.apiversion|"V1"|[api-version](https://docs.pingcap.com/tidb/stable/tikv-configuration-file#api-version-new-in-v610) of tikv server, "V1" or "V2"|
 |tikv.replace_update_with_setkeyttl|false|Replace Update operations with SetKeyTTL API calls (only enable with raw type)|
-
+|tikv.scan_not_fill_cache| true | Enable scan no fill cache |
 ### FoundationDB
 
 |field|default value|description|
